@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="court">#1B5A3D</color>
+    <color name="court_dark">#133D2A</color>
+    <color name="bg">#E8EEE9</color>
+    <color name="bg_dark">#0D1611</color>
+</resources>

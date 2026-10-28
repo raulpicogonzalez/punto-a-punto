@@ -1,0 +1,50 @@
+plugins {
+    id 'com.android.application'
+}
+
+def runNumber = (System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger()
+
+android {
+    namespace 'es.puntoapunto.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'es.puntoapunto.app'
+        minSdk 21
+        targetSdk 34
+        versionCode runNumber
+        versionName "1.0.${runNumber}"
+    }
+
+    // Clave fija: así cada versión nueva se instala encima de la anterior sin perder los partidos.
+    signingConfigs {
+        release {
+            storeFile file('puntoapunto.keystore')
+            storePassword 'puntoapunto'
+            keyAlias 'puntoapunto'
+            keyPassword 'puntoapunto'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.core:core:1.13.1'
+}
