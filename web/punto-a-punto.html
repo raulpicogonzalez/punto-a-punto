@@ -46,7 +46,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .score td.set{width:32px;text-align:center;opacity:.6}
 .score td.set sup{font-size:13px}
 .score td.games{width:38px;text-align:center}
-.score td.pts{width:56px;text-align:center;background:var(--court-2);border-radius:6px;font-weight:700}
+.score td.pts{width:64px;text-align:center;background:var(--court-2);border-left:8px solid transparent;background-clip:padding-box;border-radius:6px;font-weight:700}
 .score tr+tr td{border-top:1px solid var(--chalk)}
 .ball{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--ball);margin-right:8px;vertical-align:2px;visibility:hidden;box-shadow:inset -2px -2px 0 rgba(0,0,0,.15)}
 .ball.on{visibility:visible}
@@ -414,7 +414,7 @@ function renderStats(){
   if(sub==='resumen')h+=resumen(m,s);
   else if(sub==='tactico')h+=tactico(m,s);
   else h+=registro(m);
-  if(window.AndroidApp){
+  if(window.AndroidApp||window.PWA){
     h+=`<section class="panel"><div class="label">Exportar</div><div class="tools">
       <button class="primary" data-act="share" data-v="txt">Compartir resumen</button>
       <button class="ghost" data-act="share" data-v="csv">Exportar a Excel</button></div>
@@ -611,8 +611,10 @@ document.addEventListener('click',e=>{
       try{navigator.clipboard.writeText(t).then(()=>{const old=b.textContent;b.textContent='Copiado';setTimeout(()=>{if(b.isConnected)b.textContent=old},1600);},()=>{copyText=t;render();const ta=document.getElementById('copyArea');if(ta){ta.focus();ta.select();}});}catch(err){copyText=t;}
       break;}
     case 'share':
-      try{if(v==='csv')window.AndroidApp.shareFile(csvFile(),fileName(),'text/csv');
-          else window.AndroidApp.shareText(summaryText(),`${m.j[0]} vs ${m.j[1]}`);}catch(err){}
+      if(window.AndroidApp){
+        try{if(v==='csv')window.AndroidApp.shareFile(csvFile(),fileName(),'text/csv');
+            else window.AndroidApp.shareText(summaryText(),`${m.j[0]} vs ${m.j[1]}`);}catch(err){}
+      }else webShare(v,m);
       return;
     case 'open':db.cur=v;save();tab='partido';statSet='all';resetDraft();window.scrollTo({top:0});break;
     case 'del':
@@ -660,6 +662,21 @@ window.appBack=function(){
   if(draft.step==='how'){draft.step='serve';render();return true;}
   tab='inicio';render();window.scrollTo({top:0});return true;
 };
+
+/* Web version (iPhone / browser): share sheet, or download as fallback */
+function webShare(v,m){
+  const title=`${m.j[0]} vs ${m.j[1]}`;
+  if(v==='csv'){
+    const name=fileName(),blob=new Blob(['\ufeff'+csvFile()],{type:'text/csv'});
+    let file=null;try{file=new File([blob],name,{type:'text/csv'});}catch(e){}
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title}).catch(()=>{});return;}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);return;
+  }
+  const t=summaryText();
+  if(navigator.share){navigator.share({title,text:t}).catch(()=>{});return;}
+  try{navigator.clipboard.writeText(t);}catch(e){}
+}
 
 /* Keep the screen on while scoring */
 let lock=null;
